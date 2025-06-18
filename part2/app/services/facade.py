@@ -1,19 +1,40 @@
 from app.persistence.repository import InMemoryRepository
+from app.models.user import User
+
 
 class HBnBFacade:
     def __init__(self):
+        # Un dépôt dédié aux utilisateurs
         self.user_repo = InMemoryRepository()
-        self.place_repo = InMemoryRepository()
-        self.review_repo = InMemoryRepository()
-        self.amenity_repo = InMemoryRepository()
 
-    # Placeholder method for creating a user
-    def create_user(self, user_data):
-        # Logic will be implemented in later tasks
-        pass
+    def create_user(self, data):
+        required_fields = ["first_name", "last_name", "email"]
+        for field in required_fields:
+            if field not in data:
+                raise ValueError(f"Missing required field: {field}")
 
-    # Placeholder method for fetching a place by ID
-    def get_place(self, place_id):
-        # Logic will be implemented in later tasks
-        pass
-    
+        # Validation email minimale
+        if "@" not in data["email"]:
+            raise ValueError("Invalid email address")
+
+        # Vérifie unicité de l'email
+        existing = self.user_repo.get_by_attribute("email", data["email"])
+        if existing:
+            raise ValueError("Email already in use")
+
+        user = User(**data)
+        self.user_repo.add(user)
+        return user
+
+    def get_user(self, user_id):
+        return self.user_repo.get(user_id)
+
+    def get_all_users(self):
+        return self.user_repo.get_all()
+
+    def update_user(self, user_id, data):
+        user = self.user_repo.get(user_id)
+        if not user:
+            return None
+        self.user_repo.update(user_id, data)
+        return self.user_repo.get(user_id)
